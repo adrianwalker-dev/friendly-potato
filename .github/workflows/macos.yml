@@ -20,17 +20,17 @@ jobs:
 
       - name: Install & Start TigerVNC Server
         run: |
-          brew install tigervnc
+          brew install --cask tigervnc
 
-          # Export Homebrew Path
-          export PATH="/opt/homebrew/opt/tigervnc/bin:$PATH"
-
+          # Create VNC Directory
           mkdir -p ~/.vnc
-          echo "macpassword123" | vncpasswd -f > ~/.vnc/passwd
+
+          # Set VNC Password using full app path
+          /Applications/TigerVNC.app/Contents/MacOS/vncpasswd -f > ~/.vnc/passwd
           chmod 600 ~/.vnc/passwd
 
-          # Start TigerVNC Server on Display :1 (Port 5901)
-          vncserver :1 -geometry 1280x800 -depth 24
+          # Start TigerVNC Virtual Server on Display :1 (Port 5901)
+          /Applications/TigerVNC.app/Contents/MacOS/vncserver :1 -geometry 1280x800 -depth 24
 
       - name: Display Connection Info
         run: |
