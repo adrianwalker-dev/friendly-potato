@@ -1,0 +1,47 @@
+name: macOS-GUI-VNC
+
+on:
+  workflow_dispatch:
+
+jobs:
+  mac-gui:
+    runs-on: macos-latest
+    timeout-minutes: 3600
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Tailscale-এর অফিশিয়াল অ্যাকশন (কাস্টম ইনস্টল স্ক্রিপ্টের বদলে)
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: "" # Secret key থাকলে authkey ই যথেষ্ট
+          authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
+          hostname: mac-runner-${{ github.run_id }}
+
+      - name: Enable macOS Screen Sharing (VNC)
+        run: |
+          echo "runner:macpassword123" | sudo chpasswd
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+            -activate -configure -access -on \
+            -clientopts -setvnclegacy -vnclegacy yes \
+            -clientopts -setvncpw -vncpw macpassword123 \
+            -restart -agent -privs -all
+
+      - name: Display Connection Info
+        run: |
+          TS_IP=$(tailscale ip -4)
+          echo "=========================================="
+          echo "macOS GUI (VNC) is Ready!"
+          echo "VNC Address: vnc://$TS_IP:5900"
+          echo "Username: runner"
+          echo "Password: macpassword123"
+          echo "=========================================="
+
+      - name: Keep Runner Alive
+        run: |
+          while true; do
+            echo "[$(date)] macOS VNC Active..."
+            sleep 300
+          done
