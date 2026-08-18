@@ -1,4 +1,4 @@
-name: macOS-Latest-GUI
+name: macOS-Latest
 
 on:
   workflow_dispatch:
@@ -18,30 +18,36 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
           hostname: mac-runner-${{ github.run_id }}
 
-      - name: Enable Screen Sharing on macOS Latest
+      - name: Setup Virtual Display & Account Auth
         run: |
-          # Prevent display sleeping
+          # 1. runner ইউজারের জন্য নির্দিষ্ট পাসওয়ার্ড সেটআপ
+          echo "runner:macpassword123" | sudo chpasswd
+          
+          # 2. Virtual Display Simulation (headless crash এড়াতে)
           sudo systemsetup -setdisplaysleep Never 2>/dev/null || true
           
-          # Configure Apple Remote Management / VNC
+          # 3. Remote Management অন করে নির্দিষ্ট runner ইউজারকে পারমিশন দেওয়া
           sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
             -activate -configure -access -on \
+            -allowAccessFor -specifiedUsers \
+            -configure -users runner -access -on -privs -all \
             -clientopts -setvnclegacy -vnclegacy yes \
-            -clientopts -setvncpw -vncpw macpassword123 \
-            -restart -agent -privs -all
+            -restart -agent
 
       - name: Display Connection Info
         run: |
           TS_IP=$(tailscale ip -4)
           echo "=========================================="
-          echo "macOS Latest GUI Ready!"
-          echo "VNC Address: vnc://$TS_IP:5900"
+          echo "macOS GUI Connection Details:"
+          echo "Host: $TS_IP"
+          echo "Port: 5900"
+          echo "Username: runner"
           echo "Password: macpassword123"
           echo "=========================================="
 
       - name: Keep Runner Alive
         run: |
           while true; do
-            echo "[$(date)] macOS Active..."
+            echo "[$(date)] Active..."
             sleep 300
           done
