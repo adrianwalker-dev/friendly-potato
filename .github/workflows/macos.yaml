@@ -1,0 +1,46 @@
+name: macos
+
+on:
+  workflow_dispatch:
+
+jobs:
+  mac-gui:
+    runs-on: macos-latest
+    timeout-minutes: 3600
+
+    steps:
+      - name: Install and Setup Tailscale
+        run: |
+          curl -fsSL https://tailscale.com/install.sh | sh
+          sudo tailscaled &
+          sleep 5
+          sudo tailscale up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=mac-runner-$GITHUB_RUN_ID
+
+      - name: Enable Screen Sharing (VNC) & Virtual Display
+        run: |
+          # Set password for runner user
+          echo "runner:macpassword123" | sudo chpasswd
+
+          # Enable Remote Management / Screen Sharing
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+            -activate -configure -access -on \
+            -clientopts -setvnclegacy -vnclegacy yes \
+            -clientopts -setvncpw -vncpw macpassword123 \
+            -restart -agent -privs -all
+
+      - name: Get Connection Info
+        run: |
+          TS_IP=$(tailscale ip -4)
+          echo "=========================================="
+          echo "macOS GUI (VNC) is Ready!"
+          echo "VNC Address: vnc://$TS_IP:5900"
+          echo "Username: runner"
+          echo "Password: macpassword123"
+          echo "=========================================="
+
+      - name: Maintain Connection
+        run: |
+          while true; do
+            echo "[$(date)] macOS VNC Session Active..."
+            sleep 300
+          done
