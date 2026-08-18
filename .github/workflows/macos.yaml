@@ -20,10 +20,7 @@ jobs:
 
       - name: Enable macOS Screen Sharing (VNC)
         run: |
-          # macOS Native Password Change
-          sudo dscl . -passwd /Users/runner macpassword123
-
-          # Configure & Start VNC Server
+          # Create VNC Password directly without altering runner account
           sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
             -activate -configure -access -on \
             -clientopts -setvnclegacy -vnclegacy yes \
@@ -36,7 +33,6 @@ jobs:
           echo "=========================================="
           echo "macOS GUI (VNC) is Ready!"
           echo "VNC Address: vnc://$TS_IP:5900"
-          echo "Username: runner"
           echo "Password: macpassword123"
           echo "=========================================="
 
