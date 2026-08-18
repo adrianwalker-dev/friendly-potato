@@ -1,4 +1,4 @@
-name: macOS-RoyalTSX-GUI
+name: macOS-Latest-GUI
 
 on:
   workflow_dispatch:
@@ -18,33 +18,30 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
           hostname: mac-runner-${{ github.run_id }}
 
-      - name: Install & Start TigerVNC Server
+      - name: Enable Screen Sharing on macOS Latest
         run: |
-          brew install --cask tigervnc
-
-          # Create VNC Directory
-          mkdir -p ~/.vnc
-
-          # Set VNC Password using full app path
-          /Applications/TigerVNC.app/Contents/MacOS/vncpasswd -f > ~/.vnc/passwd
-          chmod 600 ~/.vnc/passwd
-
-          # Start TigerVNC Virtual Server on Display :1 (Port 5901)
-          /Applications/TigerVNC.app/Contents/MacOS/vncserver :1 -geometry 1280x800 -depth 24
+          # Prevent display sleeping
+          sudo systemsetup -setdisplaysleep Never 2>/dev/null || true
+          
+          # Configure Apple Remote Management / VNC
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+            -activate -configure -access -on \
+            -clientopts -setvnclegacy -vnclegacy yes \
+            -clientopts -setvncpw -vncpw macpassword123 \
+            -restart -agent -privs -all
 
       - name: Display Connection Info
         run: |
           TS_IP=$(tailscale ip -4)
           echo "=========================================="
-          echo "macOS GUI is Ready for Royal TSX!"
-          echo "IP Address: $TS_IP"
-          echo "Port: 5901"
+          echo "macOS Latest GUI Ready!"
+          echo "VNC Address: vnc://$TS_IP:5900"
           echo "Password: macpassword123"
           echo "=========================================="
 
       - name: Keep Runner Alive
         run: |
           while true; do
-            echo "[$(date)] macOS VNC Active..."
+            echo "[$(date)] macOS Active..."
             sleep 300
           done
