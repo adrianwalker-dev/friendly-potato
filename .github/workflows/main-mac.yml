@@ -12,17 +12,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Tailscale-এর অফিশিয়াল অ্যাকশন (কাস্টম ইনস্টল স্ক্রিপ্টের বদলে)
       - name: Connect to Tailscale
         uses: tailscale/github-action@v3
         with:
-          oauth-client-id: "" # Secret key থাকলে authkey ই যথেষ্ট
           authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
           hostname: mac-runner-${{ github.run_id }}
 
       - name: Enable macOS Screen Sharing (VNC)
         run: |
-          echo "runner:macpassword123" | sudo chpasswd
+          # macOS Native Password Change Method
+          sudo dscl . -passwd /Users/runner macpassword123
+
+          # Configure & Start VNC Server
           sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
             -activate -configure -access -on \
             -clientopts -setvnclegacy -vnclegacy yes \
